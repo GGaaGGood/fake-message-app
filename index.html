@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPhone Messages Icon Generator</title>
+    <style>
+        :root {
+            --logo-width: 75%;
+            --logo-top: 52%;
+            --logo-left: 51%;
+        }
+        @font-face {
+            font-family: 'SFProText';
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-solid-900.woff2') format('woff2');
+            font-weight: bold;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+        }
+        #messageIcon {
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(135deg, #5CF14B 0%, #00B524 100%);
+            border-radius: 42px;
+            position: relative;
+            margin: 20px auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: visible;
+        }
+        #messageIcon img {
+            position: absolute;
+            width: var(--logo-width);
+            top: var(--logo-top);
+            left: var(--logo-left);
+            transform: translate(-50%, -50%);
+        }
+        #notificationBadge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #FF3B30;
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'SFProText', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            min-width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        input, button {
+            font-size: 16px;
+            padding: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>iPhone Messages Icon Generator</h1>
+        <div id="messageIcon">
+            <img src="logo.png" alt="Messages Logo">
+            <div id="notificationBadge"></div>
+        </div>
+        <input type="number" id="notificationCount" min="0" max="99999" placeholder="Enter notification count" oninput="updateNotification()">
+        <button onclick="downloadImage()">Download PNG</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        function updateNotification() {
+            const count = document.getElementById('notificationCount').value;
+            const badge = document.getElementById('notificationBadge');
+            if (count > 0) {
+                if (count > 99999) {
+                    badge.textContent = '99999+';
+                } else {
+                    badge.textContent = count;
+                }
+                badge.style.display = 'flex';
+                if (count > 999) {
+                    badge.style.padding = '2px 4px';
+                    badge.style.fontSize = '20px';
+                } else if (count > 99) {
+                    badge.style.padding = '2px 6px';
+                    badge.style.fontSize = '22px';
+                } else {
+                    badge.style.padding = '2px 8px';
+                    badge.style.fontSize = '24px';
+                }
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        
+        function downloadImage() {
+            const iconElement = document.getElementById('messageIcon');
+            const padding = 20; // Add padding around the icon
+            
+            html2canvas(iconElement, {
+                backgroundColor: null,
+                scale: 5,
+                logging: false,
+                useCORS: true,
+                width: iconElement.offsetWidth + padding * 2,
+                height: iconElement.offsetHeight + padding * 2,
+                x: -padding,
+                y: -padding,
+                onclone: function(clonedDoc) {
+                    const clonedIcon = clonedDoc.getElementById('messageIcon');
+                    clonedIcon.style.transform = 'scale(1)';
+                    clonedIcon.style.transformOrigin = 'center center';
+                }
+            }).then(canvas => {
+                // Crop the canvas to remove any potential white space
+                const croppedCanvas = cropCanvas(canvas);
+                
+                const link = document.createElement('a');
+                link.download = 'messages_icon.png';
+                link.href = croppedCanvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+        
+        function cropCanvas(canvas) {
+            const ctx = canvas.getContext('2d');
+            const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const l = pixels.data.length;
+            const bound = {
+                top: null,
+                left: null,
+                right: null,
+                bottom: null
+            };
+            let x, y;
+        
+            // Iterate over every pixel to find the highest
+            // and lowest x and y that are not transparent
+            for (let i = 0; i < l; i += 4) {
+                if (pixels.data[i + 3] !== 0) {
+                    x = (i / 4) % canvas.width;
+                    y = ~~((i / 4) / canvas.width);
+        
+                    if (bound.top === null) {
+                        bound.top = y;
+                    }
+        
+                    if (bound.left === null) {
+                        bound.left = x;
+                    } else if (x < bound.left) {
+                        bound.left = x;
+                    }
+        
+                    if (bound.right === null) {
+                        bound.right = x;
+                    } else if (bound.right < x) {
+                        bound.right = x;
+                    }
+        
+                    if (bound.bottom === null) {
+                        bound.bottom = y;
+                    } else if (bound.bottom < y) {
+                        bound.bottom = y;
+                    }
+                }
+            }
+        
+            // Calculate the width and height of the content
+            const trimHeight = bound.bottom - bound.top;
+            const trimWidth = bound.right - bound.left;
+            const trimmed = ctx.getImageData(bound.left, bound.top, trimWidth, trimHeight);
+        
+            // Create a new canvas with the trimmed dimensions
+            const trimmedCanvas = document.createElement('canvas');
+            trimmedCanvas.width = trimWidth;
+            trimmedCanvas.height = trimHeight;
+            trimmedCanvas.getContext('2d').putImageData(trimmed, 0, 0);
+        
+            return trimmedCanvas;
+        }
+    </script>
+</body>
+</html>
